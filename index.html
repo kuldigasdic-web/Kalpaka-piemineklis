@@ -2,63 +2,45 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    <!-- Google model-viewer bibliotēka -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; }
+      body { margin: 0; }
+      model-viewer {
+        width: 100vw;
+        height: 100vh;
+      }
+      #ar-button {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 14px 28px;
+        background-color: #007aff;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        font-weight: bold;
+        font-size: 16px;
+      }
     </style>
-
-    <script>
-      // Komponente, kas automātiski pielāgo modeļa mērogu līdz precīzi vēlamajam augstumam metros
-      AFRAME.registerComponent('auto-height', {
-        schema: { type: 'number', default: 1.0 }, // 1.0 = 1 metrs
-        init: function () {
-          this.el.addEventListener('model-loaded', () => {
-            const mesh = this.el.getObject3D('mesh');
-            if (!mesh) return;
-
-            // Aprēķina modeļa faktisko 3D robežkasti (Bounding Box)
-            const bbox = new THREE.Box3().setFromObject(mesh);
-            const size = new THREE.Vector3();
-            bbox.getSize(size);
-
-            // Ja modelis ir pagriezts par 90 grādiem, augstums var būt Y vai Z asī
-            const currentHeight = size.y > 0 ? size.y : 1;
-            const targetHeight = this.data; // Mērķa augstums (1 metrs)
-
-            const scaleFactor = targetHeight / currentHeight;
-            this.el.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`);
-          });
-        }
-      });
-    </script>
   </head>
   <body>
-    <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01; missTolerance: 5;" 
-      color-space="sRGB" 
-      renderer="colorManagement: true, physicallyCorrectLights" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
-      
-      <a-assets>
-        <a-asset-item id="mansModelis" src="./modelis.glb"></a-asset-item>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity id="targetEntity" mindar-image-target="targetIndex: 0">
-        <!-- 
-          auto-height="1.0" nodrošina, ka objekts būs tieši 1 m augsts.
-          rotation="90 0 0" nodrošina, ka objekts "stāv" uz kartītes plaknes.
-        -->
-        <a-gltf-model 
-          src="#mansModelis" 
-          position="0 0 0" 
-          rotation="90 0 0" 
-          auto-height="1.0">
-        </a-gltf-model>
-      </a-entity>
-    </a-scene>
+    <!-- 
+      ar: ieslēdz AR režīmu
+      ar-modes: izmanto sistēmas rīkus (WebXR, Scene Viewer, QuickLook)
+      camera-controls: ļauj grozīt 3D modeli ekrānā pirms nolikšanas uz grīdas
+    -->
+    <model-viewer 
+      src="./modelis.glb" 
+      ar 
+      ar-modes="webxr scene-viewer quick-look" 
+      camera-controls 
+      touch-action="pan-y" 
+      alt="3D modelis">
+      <button slot="ar-button" id="ar-button">
+        👋 Skatīt manā telpā (AR)
+      </button>
+    </model-viewer>
   </body>
 </html>
