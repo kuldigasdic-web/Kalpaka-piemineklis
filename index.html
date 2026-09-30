@@ -7,32 +7,56 @@
     <style>
       body { margin: 0; overflow: hidden; }
     </style>
+
+    <script>
+      // Komponente, kas automātiski pielāgo modeļa mērogu līdz precīzi vēlamajam augstumam metros
+      AFRAME.registerComponent('auto-height', {
+        schema: { type: 'number', default: 1.0 }, // 1.0 = 1 metrs
+        init: function () {
+          this.el.addEventListener('model-loaded', () => {
+            const mesh = this.el.getObject3D('mesh');
+            if (!mesh) return;
+
+            // Aprēķina modeļa faktisko 3D robežkasti (Bounding Box)
+            const bbox = new THREE.Box3().setFromObject(mesh);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+
+            // Ja modelis ir pagriezts par 90 grādiem, augstums var būt Y vai Z asī
+            const currentHeight = size.y > 0 ? size.y : 1;
+            const targetHeight = this.data; // Mērķa augstums (1 metrs)
+
+            const scaleFactor = targetHeight / currentHeight;
+            this.el.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`);
+          });
+        }
+      });
+    </script>
   </head>
   <body>
     <a-scene 
-      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01;" 
+      mindar-image="imageTargetSrc: ./targets.mind; filterMinCF: 0.0001; filterBeta: 0.01; missTolerance: 5;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <!-- Ielādē 3D modeli .glb formātā -->
         <a-asset-item id="mansModelis" src="./modelis.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
+      <a-entity id="targetEntity" mindar-image-target="targetIndex: 0">
         <!-- 
-          scale: 3D modeļi mēdz būt milzīgi vai ļoti mazi. Pielāgo (piem., 0.1 0.1 0.1 vai 0.5 0.5 0.5)
-          rotation: "90 0 0" pagriež objektu, lai tas "stāvētu" uz kartītes, nevis gulētu plakaniski
+          auto-height="1.0" nodrošina, ka objekts būs tieši 1 m augsts.
+          rotation="90 0 0" nodrošina, ka objekts "stāv" uz kartītes plaknes.
         -->
         <a-gltf-model 
           src="#mansModelis" 
-          position="0 0 0.1" 
-          scale="0.2 0.2 0.2" 
-          rotation="90 0 0">
+          position="0 0 0" 
+          rotation="90 0 0" 
+          auto-height="1.0">
         </a-gltf-model>
       </a-entity>
     </a-scene>
